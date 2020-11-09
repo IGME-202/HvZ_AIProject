@@ -31,3 +31,4 @@ No external assets were used
 
 ## Notes
 
+Once all of the humans and zombies each stack into one large blob there is a small chance of the zombie ever actually catching up to the remaining humans. If this happens it is easiet to just reset the game if you are looking to see the ending behavior. 

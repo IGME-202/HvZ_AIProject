@@ -1,42 +1,33 @@
 # Project Documentation
 
--   Name: YOUR NAME
--   Section: ##
--   Assignment: PROJECT NAME
+-   Name: Nathan Wildofsky
+-   Section: 06
+-   Assignment: PROJECT 3: Humans vs. Zombies A
 
-**PLEASE REPLACE THE TEXT IN EACH SECTION WITH YOUR OWN DOCUMENTATION**
 
 ## Description
 
-A brief explanation of your project
+This project is the first "milestone" of a Unity game that features autonomous agents moving around a scene due to certain goals and desires. In this game a number of humans and zombies, usually more humans at the start than zombies, and one treasure item are created at the start of the game and randomly positioned within a platform. From then on, everything is controlled by the scripts on the human and zombie game objects. Humans will try to seek out the treasure while also running away from any zombies that come near them. Zombies are always chasing the nearest human to them and if a zombie gets close enough it will convert the human into a zombie. If a human gets close enough to the treasure, the treasure is then moved randomly within the platform again. Both humans and zombies move with forces that are results of goals and desires they have, including a force that will always keep them within the boundary of the platform's edges. If all humans are converted to zombies then all of the zombies convene in the center of the platform. The user can also toggle debug lines on and off to see what human each zombie is targeting and the forward and right vectors on both humans and zombies.
 
 ## User Responsibilities
 
-What the user will need to do in the program
-Include user interaction: keys to press, mouse buttons to click/drag, etc.
+The user can press the 'D' key to toggle on and off the debug lines of humans and zombies
 
 ## Above and Beyond <kbd>OPTIONAL</kbd>
 
-What did you add or do in your program to earn above and beyond **bouns** points?
-
--   Be specific and explicit!
--   We are not mind readers.
-
-Bouns points for above and beyond will only be earned if it is listed in this file.
+No above and beyond features were implemented
 
 ## Known Issues
 
-List any errors, lack of error checking, or specific information that I need to know to run your program
+When zombies approach a human from both sides at once, the human's steering forces no longer move the human and it gets stuck in between the zombies until it is converted
 
 ## Requirements not completed
 
-If you did not complete a project requirement, notate that here
+Every requirement on the rubrik was completed
 
 ## Sources
 
--   List all project sources here – models, textures, sound clips, assets, etc.
-    -   include a link to the page and the author’s name
+No external assets were used
 
 ## Notes
 
-If a student chooses to use a grace period on a project, it must be included inside that project’s documentation file.

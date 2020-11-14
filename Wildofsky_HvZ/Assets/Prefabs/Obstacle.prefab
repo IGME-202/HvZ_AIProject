@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &477084461286122333
+--- !u!1 &938373877079359557
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,47 +8,47 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 477084461286122329}
-  - component: {fileID: 477084461286122334}
-  - component: {fileID: 477084461286122335}
-  - component: {fileID: 477084461286122332}
-  - component: {fileID: 2984955968680218118}
+  - component: {fileID: 6138483803716728193}
+  - component: {fileID: 3967755240146203281}
+  - component: {fileID: 4309736774210474502}
+  - component: {fileID: 3136509939732414391}
+  - component: {fileID: 6459286843235747577}
   m_Layer: 0
-  m_Name: Human
+  m_Name: Obstacle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &477084461286122329
+--- !u!4 &6138483803716728193
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 477084461286122333}
+  m_GameObject: {fileID: 938373877079359557}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 4, y: 4, z: 4}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &477084461286122334
+--- !u!33 &3967755240146203281
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 477084461286122333}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &477084461286122335
+  m_GameObject: {fileID: 938373877079359557}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &4309736774210474502
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 477084461286122333}
+  m_GameObject: {fileID: 938373877079359557}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -60,7 +60,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c3b39358caf3ab74daed58faeb5f02a7, type: 2}
+  - {fileID: 2100000, guid: 8d0f26037570cd243822ad26c6745efa, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -81,40 +81,29 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
---- !u!65 &477084461286122332
-BoxCollider:
+--- !u!135 &3136509939732414391
+SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 477084461286122333}
+  m_GameObject: {fileID: 938373877079359557}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &2984955968680218118
+--- !u!114 &6459286843235747577
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 477084461286122333}
+  m_GameObject: {fileID: 938373877079359557}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3b86fab6dfd09dc48aea8e5ea4efc686, type: 3}
+  m_Script: {fileID: 11500000, guid: 62fae389bc54c5646a763725f5bbe189, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  planarPosition: {x: 0, y: 0, z: 0}
-  mass: 1
-  radius: 1
-  maxSpeed: 8
-  maxForce: 23
-  timeCoeff: 2
-  avoidanceRange: 9
-  pathMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
-  detectionRange: 8
-  debugForward: {fileID: 2100000, guid: c4134103507c36b4793e7c76669ce156, type: 2}
-  debugRight: {fileID: 2100000, guid: 7980e52404cc64b41a04eaad5ccd0d60, type: 2}
-  debugMultiplier: 1.3
+  radius: 2

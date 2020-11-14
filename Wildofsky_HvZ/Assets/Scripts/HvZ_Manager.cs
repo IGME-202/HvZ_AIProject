@@ -18,14 +18,21 @@ public class HvZ_Manager : MonoBehaviour
     public GameObject human;
     public GameObject zombie;
     public GameObject treasure;
+    public GameObject obstacle;
+    public GameObject humanParent;
+    public GameObject zombieParent;
+    public GameObject obstacleParent;
     [NonSerialized]
     public List<GameObject> activeHumans;
     [NonSerialized]
     public List<GameObject> activeZombies;
     [NonSerialized]
+    public List<GameObject> activeObstacles;
+    [NonSerialized]
     public GameObject activeTreasure;
     public int numHumans = 10;
     public int numZombies = 5;
+    public int numObstacles = 20;
 
     MeshRenderer floor;
     Vector3 max;
@@ -41,13 +48,15 @@ public class HvZ_Manager : MonoBehaviour
     {
         activeHumans = new List<GameObject>();
         activeZombies = new List<GameObject>();
+        activeObstacles = new List<GameObject>();
 
         floor = GameObject.FindWithTag("Floor").GetComponent<MeshRenderer>();
         max = floor.bounds.max;
         min = floor.bounds.min;
 
-        InstantiateAllInto(human, activeHumans, numHumans);
-        InstantiateAllInto(zombie, activeZombies, numZombies);
+        InstantiateAllInto(human, activeHumans, numHumans, humanParent);
+        InstantiateAllInto(zombie, activeZombies, numZombies, zombieParent);
+        InstantiateAllInto(obstacle, activeObstacles, numObstacles, obstacleParent);
         activeTreasure = Instantiate(treasure, GetRandomPosition(treasure), Quaternion.identity);
     }
 
@@ -57,19 +66,19 @@ public class HvZ_Manager : MonoBehaviour
         ZombieConversion();
     }
 
-    private void InstantiateAllInto(GameObject obj, List<GameObject> objList, int iterations)
+    private void InstantiateAllInto(GameObject obj, List<GameObject> objList, int iterations, GameObject parent)
     {
         for (int i = 0; i < iterations; i++)
         {
-            objList.Add(Instantiate(obj, GetRandomPosition(obj), Quaternion.identity));
+            objList.Add(Instantiate(obj, GetRandomPosition(obj), Quaternion.identity, parent.transform));
         }
     }
 
-    private void AddToScene(GameObject obj, List<GameObject> objList, Vector3 position)
+    private void AddToScene(GameObject obj, List<GameObject> objList, Vector3 position, GameObject parent)
     {
         position.y = obj.GetComponent<MeshRenderer>().bounds.extents.y;
 
-        objList.Add(Instantiate(obj, position, Quaternion.identity));
+        objList.Add(Instantiate(obj, position, Quaternion.identity, parent.transform));
     }
 
     private Vector3 GetRandomPosition(GameObject obj)
@@ -89,7 +98,7 @@ public class HvZ_Manager : MonoBehaviour
                     Vector3 convertPos = humanToConvert.transform.position;
                     activeHumans.RemoveAt(j);
                     Destroy(humanToConvert);
-                    AddToScene(zombie, activeZombies, convertPos);
+                    AddToScene(zombie, activeZombies, convertPos, zombieParent);
                     j = -1;
                 }
             }

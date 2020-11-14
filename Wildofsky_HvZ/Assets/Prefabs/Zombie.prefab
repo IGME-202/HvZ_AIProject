@@ -110,10 +110,13 @@ MonoBehaviour:
   mass: 1.8
   radius: 2
   maxSpeed: 4.5
-  maxForce: 1
+  maxForce: 5
+  timeCoeff: 1.2
+  avoidanceRange: 8
+  pathMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   debugForward: {fileID: 2100000, guid: c4134103507c36b4793e7c76669ce156, type: 2}
   debugRight: {fileID: 2100000, guid: 7980e52404cc64b41a04eaad5ccd0d60, type: 2}
   debugTarget: {fileID: 2100000, guid: fd8e267669c2b23488d98fc6c5b2a7e1, type: 2}
   debugMultiplier: 2
   stopRadius: 0
-  slowRadius: 15
+  slowRadius: 2

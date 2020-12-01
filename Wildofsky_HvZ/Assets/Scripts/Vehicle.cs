@@ -1,11 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public abstract class Vehicle : MonoBehaviour
 {
     protected Vector3 position;
     public Vector3 planarPosition;
+    public Vector3 futurePosition;
     protected Vector3 direction;
     protected Vector3 velocity;
     protected Vector3 acceleration;
@@ -32,6 +34,29 @@ public abstract class Vehicle : MonoBehaviour
     // Use a mesh box to display a moving object's path so it can be rotated with the object
     public Mesh pathMesh;
 
+    // Use a mesh to display the predicted future position of each object
+    public Mesh futurePosMesh;
+    // Let each force be multiplied by a value that can be changed in the inspector for balancing
+    public float predictionFactor = 1f;
+    public float boundaryEvasionFactor = 1f;
+    public float obstacleAvoidanceFactor = 1f;
+    public float wanderingFactor = 1f;
+    public float separationFactor = 1f;
+    // Let each prefab determine how long its forward and right debug lines are
+    public float debugMultiplier = 1;
+
+    public float wanderingRadius = 1;
+    public float wanderCircleDist = 1;
+    public float wanderingTimer = 0;
+    public float wanderPeriod = 1;
+    private float wanderAngle;
+    public float wanderAngleOffsetRange = .0175f;
+
+    protected List<GameObject> allVehicles;
+    public float separationRadius = 2;
+
+    public float rotationDamping = 0.5f;
+
     // Start is called before the first frame update
     protected virtual void Start()
     {
@@ -42,6 +67,10 @@ public abstract class Vehicle : MonoBehaviour
         // Initialize a reference to the floor's mesh renderer in start so Unity does not have to find the floor every frame in Bounce()
         floor = GameObject.FindWithTag("Floor").GetComponent<MeshRenderer>();
         avoidList = new List<GameObject>();
+        wanderAngle = UnityEngine.Random.Range(0, 6.283f);
+
+        obstacles = HvZ_Manager.Instance.activeObstacles;
+        allVehicles = HvZ_Manager.Instance.allVehicles;
 
         debugEnabled = false;
         // Make sure every zombie generated during runtime has the same value as the zombies already in the scene
@@ -50,7 +79,6 @@ public abstract class Vehicle : MonoBehaviour
             if (obj.GetComponent<Vehicle>().debugEnabled)
             {
                 debugEnabled = true;
-                return;
             }
         }
     }
@@ -61,6 +89,7 @@ public abstract class Vehicle : MonoBehaviour
         // Reset acceleration for each frame
         acceleration = Vector3.zero;
         planarPosition = new Vector3(position.x, 0, position.z);
+        futurePosition = position + velocity;
 
         forward = direction;
         right = Quaternion.Euler(0, 90, 0) * direction;
@@ -117,6 +146,11 @@ public abstract class Vehicle : MonoBehaviour
     {
         // Update position
         transform.position = position;
+
+        // Update rotation through the direction vector
+        // Smooth the rotations so there is no jittering
+        transform.forward = Vector3.Lerp(transform.forward, direction, Time.deltaTime * rotationDamping);
+
     }
 
     protected void ApplyForce(Vector3 force)
@@ -161,6 +195,14 @@ public abstract class Vehicle : MonoBehaviour
     }
     #endregion
 
+    protected Vector3 Pursue(GameObject target, float timeCoeff)
+    {
+        // Calculate a predicted future position of the target
+        Vector3 predictedPos = target.GetComponent<Vehicle>().futurePosition * timeCoeff;
+
+        return Seek(predictedPos);
+    }
+
     #region Flee Logic
     protected Vector3 Flee(Vector3 targetPos)
     {
@@ -180,6 +222,14 @@ public abstract class Vehicle : MonoBehaviour
         return Flee(target.transform.position);
     }
     #endregion
+
+    protected Vector3 Evade(GameObject target, float timeCoeff)
+    {
+        // Calculate a predicted future position of the target
+        Vector3 predictedPos = target.GetComponent<Vehicle>().futurePosition * timeCoeff;
+
+        return Flee(predictedPos);
+    }
 
     protected Vector3 Arrive(Vector3 targetPos, float slowDown, float stop)
     {
@@ -226,7 +276,7 @@ public abstract class Vehicle : MonoBehaviour
         Vector3 max = floor.bounds.max;
         Vector3 min = floor.bounds.min;
 
-        Vector3 predictedPos = velocity * timeCoeff + position;
+        Vector3 predictedPos = futurePosition * timeCoeff;
         Vector3 desiredPosition = Vector3.zero;
         Vector3 boundaryForce = Vector3.zero;
         float distance = 1;
@@ -334,7 +384,7 @@ public abstract class Vehicle : MonoBehaviour
             toObstacle = obstacle.transform.position - position;
             dotProduct = Vector3.Dot(velocity, toObstacle);
             obstacleDistance = toObstacle.magnitude;
-            
+
             // If an object happens to go inside an obstacle, make the distance value extremely small so the force to get out of the obstacle is strong
             if (obstacleDistance <= obstacle.GetComponent<Obstacle>().radius + radius)
             {
@@ -342,7 +392,7 @@ public abstract class Vehicle : MonoBehaviour
             }
 
             // If an obstacle is in front of a moving object and within the object's detection range
-            if (dotProduct > 0 && 
+            if (dotProduct > 0 &&
                 obstacleDistance < avoidanceRange + obstacle.GetComponent<Obstacle>().radius)
             {
                 // Change the dot product value to a projection of the vector to the obstacle onto the objects right vector(already normalized)
@@ -371,8 +421,51 @@ public abstract class Vehicle : MonoBehaviour
                 }
             }
         }
-
         return avoidanceSteering;
+    }
+
+    protected Vector3 Wandering()
+    {
+        wanderingTimer += Time.deltaTime;
+
+        // Get a new randow angle every set period
+        if (wanderingTimer >= wanderPeriod)
+        {
+            wanderAngle = UnityEngine.Random.Range(0, 6.283f);
+
+            wanderingTimer -= wanderPeriod;
+        }
+        // Once you have a angle, every frame add a bit of offset to it, negative or positive
+        wanderAngle += UnityEngine.Random.Range(-wanderAngleOffsetRange, wanderAngleOffsetRange);
+        // From the angle's radians get the target position for this frame of wander
+        Vector3 circleCenter = position + forward * wanderCircleDist;
+        Vector3 targetPos = new Vector3(circleCenter.x + Mathf.Cos(wanderAngle) * wanderingRadius, 0, circleCenter.z + Mathf.Sin(wanderAngle) * wanderingRadius);
+
+        return Seek(targetPos);
+    }
+
+    protected Vector3 Separation()
+    {
+        Vector3 separationSteering = Vector3.zero;
+        Vector3 toObject;
+        float objectDistance;
+
+        foreach (GameObject obj in allVehicles)
+        {
+            toObject = obj.transform.position - position;
+            if (toObject == Vector3.zero)
+            {
+                continue;
+            }
+            objectDistance = toObject.magnitude;
+
+            if (objectDistance <= separationRadius)
+            {
+                separationSteering += Flee(obj.transform.position) * (1 / objectDistance);
+            }
+        }
+
+        return separationSteering;
     }
 
     protected virtual void OnDrawGizmosSelected()
@@ -382,14 +475,12 @@ public abstract class Vehicle : MonoBehaviour
         Gizmos.DrawWireSphere(position, avoidanceRange);
 
         // Dar future position
-        Gizmos.color = Color.green;
-        Vector3 futurePos = position + velocity;
-        Gizmos.DrawWireSphere(futurePos, radius);
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(futurePosition, radius);
 
         // Draw velocity path area
-        Gizmos.color = Color.red;
-        Vector3 boxSize = new Vector3(radius * 2f, radius * 2f, Vector3.Distance(position, futurePos) + radius);
-        Vector3 boxCenter = (futurePos - position).normalized * (boxSize.z / 2f);
+        Vector3 boxSize = new Vector3(radius * 2f, radius * 2f, Vector3.Distance(position, futurePosition) + radius);
+        Vector3 boxCenter = (futurePosition - position).normalized * (boxSize.z / 2f);
         Gizmos.DrawWireMesh(pathMesh, position + boxCenter, Quaternion.LookRotation(velocity, Vector3.up), boxSize);
 
         // Draw lines to obstacles to avoid
@@ -398,5 +489,13 @@ public abstract class Vehicle : MonoBehaviour
         {
             Gizmos.DrawLine(position, obstacle.transform.position);
         }
+
+        // Draw wandering circle
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(position + forward * wanderCircleDist, wanderingRadius);
+
+        // Draw separation circle
+        Gizmos.color = Color.black;
+        Gizmos.DrawWireSphere(position, separationRadius);
     }
 }

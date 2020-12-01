@@ -13,11 +13,9 @@ public class Zombie : Vehicle
     public Material debugForward;
     public Material debugRight;
     public Material debugTarget;
-    public float debugMultiplier = 1;
+    public Material debugPrediction;
 
-    public float obstacleAvoidanceFactor = 20f;
-    public float seekHumanFactor = 1f;
-    public float boundaryEvasionFactor = 1f;
+    public float pursueHumanFactor = 1f;
 
     public float stopRadius = 0;
     public float slowRadius = 10;
@@ -28,7 +26,6 @@ public class Zombie : Vehicle
         base.Start();
 
         activeHumans = HvZ_Manager.Instance.activeHumans;
-        obstacles = HvZ_Manager.Instance.activeObstacles;
     }
 
     protected override void Update()
@@ -43,14 +40,12 @@ public class Zombie : Vehicle
 
     protected override void CalcSteeringForces()
     {
+        // Accumulate all forces before applying them to the object
+        Vector3 netForce = Vector3.zero;
+
         // If there are humans in the scene, zombie will chase the neareast human using seek
         if (activeHumans.Count > 0)
         {
-            // Accumulate all forces before applying them to the object
-            Vector3 netForce = Vector3.zero;
-
-            netForce += ObstacleAvoidance() * obstacleAvoidanceFactor;
-
             targetHuman = null;
             targetDist = Mathf.Infinity;
 
@@ -65,28 +60,22 @@ public class Zombie : Vehicle
                 }
             }
             // Every frame the zombie is just chasing the closest human to it
-            netForce += Seek(targetHuman) * seekHumanFactor;
-
-            netForce += BoundaryEvasion(timeCoeff) * boundaryEvasionFactor;
-            // Clamp the net force to a max force to keep the simulation reasonable
-            netForce = Vector3.ClampMagnitude(netForce, maxForce);
-            ApplyForce(netForce);
+            netForce += Pursue(targetHuman, predictionFactor) * pursueHumanFactor;
         }
         // If there are no more humans in the scene, zombies will all arrive at the center of the platform (temporary)
         else
         {
             targetHuman = null;
 
-            ApplyForce(Arrive(Vector3.zero, slowRadius, stopRadius));
-
-            if (position.x <= 0.05f && position.x >= -0.05f && position.z <= 0.05f && position.z >= -0.05f)
-            {
-                velocity = Vector3.zero;
-                position.x = 0;
-                position.z = 0;
-                acceleration = Vector3.zero;
-            }
+            netForce += Wandering() * wanderingFactor;
         }
+
+        netForce += ObstacleAvoidance() * obstacleAvoidanceFactor;
+        netForce += BoundaryEvasion(predictionFactor) * boundaryEvasionFactor;
+        netForce += Separation() * separationFactor;
+        // Clamp the net force to a max force to keep the simulation reasonable
+        netForce = Vector3.ClampMagnitude(netForce, maxForce);
+        ApplyForce(netForce);
     }
 
     private void OnRenderObject()
@@ -123,6 +112,12 @@ public class Zombie : Vehicle
                 GL.Vertex(targetHuman.transform.position);
                 GL.End();
             }
+
+            Vector3 scale = new Vector3(0.4f, 0.4f, 0.4f);
+            Matrix4x4 debugPos = Matrix4x4.TRS(futurePosition, Quaternion.identity, scale);
+
+            debugPrediction.SetPass(0);
+            Graphics.DrawMeshNow(futurePosMesh, debugPos);
         }
     }
 }

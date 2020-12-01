@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class HvZ_Manager : MonoBehaviour
 {
@@ -17,7 +19,6 @@ public class HvZ_Manager : MonoBehaviour
 
     public GameObject human;
     public GameObject zombie;
-    public GameObject treasure;
     public GameObject obstacle;
     public GameObject humanParent;
     public GameObject zombieParent;
@@ -27,16 +28,27 @@ public class HvZ_Manager : MonoBehaviour
     [NonSerialized]
     public List<GameObject> activeZombies;
     [NonSerialized]
-    public List<GameObject> activeObstacles;
+    public List<GameObject> allVehicles;
     [NonSerialized]
-    public GameObject activeTreasure;
+    public List<GameObject> activeObstacles;
     public int numHumans = 10;
     public int numZombies = 5;
     public int numObstacles = 20;
+    public Text humanCount;
+    public Text zombieCount;
+    public Text obstacleCount;
 
     MeshRenderer floor;
     Vector3 max;
     Vector3 min;
+
+    [NonSerialized]
+    public bool placingObstacles = false;
+    [NonSerialized]
+    public bool placingHumans = false;
+    [NonSerialized]
+    public bool placingZombies = false;
+    public Image placementMarker;
 
     private void Awake()
     {
@@ -49,6 +61,7 @@ public class HvZ_Manager : MonoBehaviour
         activeHumans = new List<GameObject>();
         activeZombies = new List<GameObject>();
         activeObstacles = new List<GameObject>();
+        allVehicles = new List<GameObject>();
 
         floor = GameObject.FindWithTag("Floor").GetComponent<MeshRenderer>();
         max = floor.bounds.max;
@@ -57,13 +70,25 @@ public class HvZ_Manager : MonoBehaviour
         InstantiateAllInto(human, activeHumans, numHumans, humanParent);
         InstantiateAllInto(zombie, activeZombies, numZombies, zombieParent);
         InstantiateAllInto(obstacle, activeObstacles, numObstacles, obstacleParent);
-        activeTreasure = Instantiate(treasure, GetRandomPosition(treasure), Quaternion.identity);
+        allVehicles.AddRange(activeHumans);
+        allVehicles.AddRange(activeZombies);
     }
 
     // Update is called once per frame
     void Update()
     {
         ZombieConversion();
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            SceneManager.LoadSceneAsync("HumansVsZombies");
+        }
+
+        PlaceObjects();
+
+        humanCount.text = activeHumans.Count.ToString();
+        zombieCount.text = activeZombies.Count.ToString();
+        obstacleCount.text = activeObstacles.Count.ToString();
     }
 
     private void InstantiateAllInto(GameObject obj, List<GameObject> objList, int iterations, GameObject parent)
@@ -74,11 +99,16 @@ public class HvZ_Manager : MonoBehaviour
         }
     }
 
-    private void AddToScene(GameObject obj, List<GameObject> objList, Vector3 position, GameObject parent)
+    private void AddToScene(GameObject obj, List<GameObject> objList, Vector3 position, GameObject parent, bool isVehicle)
     {
         position.y = obj.GetComponent<MeshRenderer>().bounds.extents.y;
 
-        objList.Add(Instantiate(obj, position, Quaternion.identity, parent.transform));
+        GameObject objToAdd = Instantiate(obj, position, Quaternion.identity, parent.transform);
+        objList.Add(objToAdd);
+        if (isVehicle)
+        {
+            allVehicles.Add(objToAdd);
+        }
     }
 
     private Vector3 GetRandomPosition(GameObject obj)
@@ -97,8 +127,9 @@ public class HvZ_Manager : MonoBehaviour
                     GameObject humanToConvert = activeHumans[j];
                     Vector3 convertPos = humanToConvert.transform.position;
                     activeHumans.RemoveAt(j);
+                    allVehicles.Remove(humanToConvert);
                     Destroy(humanToConvert);
-                    AddToScene(zombie, activeZombies, convertPos, zombieParent);
+                    AddToScene(zombie, activeZombies, convertPos, zombieParent, true);
                     j = -1;
                 }
             }
@@ -119,5 +150,74 @@ public class HvZ_Manager : MonoBehaviour
         }
 
         return isColliding;
+    }
+
+    public void ToggleObstaclePlacement()
+    {
+        placingObstacles = !placingObstacles;
+        placingHumans = false;
+        placingZombies = false;
+    }
+
+    public void ToggleHumanPlacement()
+    {
+        placingHumans = !placingHumans;
+        placingObstacles = false;
+        placingZombies = false;
+    }
+
+    public void ToggleZombiePlacement()
+    {
+        placingZombies = !placingZombies;
+        placingObstacles = false;
+        placingHumans = false;
+    }
+
+    private void PlaceObjects()
+    {
+        if (placingObstacles || placingHumans || placingZombies)
+        {
+            Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            bool withinBounds = true;
+            placementMarker.gameObject.SetActive(true);
+
+            if (mousePosition.x > max.x || mousePosition.x < min.x || mousePosition.z > max.z || mousePosition.z < min.z)
+            {
+                withinBounds = false;
+            }
+
+            if (withinBounds)
+            {
+                // Match the marker position to the mouse position relative to the canvas UI
+                Vector3 markerPosition = new Vector3(0, placementMarker.transform.position.y, 0);
+                markerPosition.x = mousePosition.x;
+                markerPosition.z = mousePosition.z;
+                placementMarker.transform.position = markerPosition;
+            }
+
+            if (Input.GetMouseButtonDown(0) && withinBounds && placingObstacles)
+            {
+                AddToScene(obstacle, activeObstacles, mousePosition, obstacleParent, false);
+            }
+            else if (Input.GetMouseButtonDown(0) && withinBounds && placingHumans)
+            {
+                AddToScene(human, activeHumans, mousePosition, humanParent, true);
+            }
+            else if (Input.GetMouseButtonDown(0) && withinBounds && placingZombies)
+            {
+                AddToScene(zombie, activeZombies, mousePosition, zombieParent, true);
+            }
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                placingObstacles = false;
+                placingHumans = false;
+                placingZombies = false;
+            }
+        }
+        else
+        {
+            placementMarker.gameObject.SetActive(false);
+        }
     }
 }

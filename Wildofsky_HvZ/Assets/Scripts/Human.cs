@@ -6,25 +6,19 @@ using UnityEngine.UIElements;
 public class Human : Vehicle
 {
     List<GameObject> activeZombies;
-    GameObject treasure;
     public float detectionRange = 5f;
 
     public Material debugForward;
     public Material debugRight;
-    public float debugMultiplier = 1;
+    public Material debugPrediction;
 
-    public float obstacleAvoidanceFactor = 5f;
-    public float seekTreasureFactor = 1f;
-    public float boundaryEvasionFactor = 1f;
-    public float fleeZombiesFactor = 1f;
+    public float evadeZombiesFactor = 1f;
 
     protected override void Start()
     {
         base.Start();
 
         activeZombies = HvZ_Manager.Instance.activeZombies;
-        obstacles = HvZ_Manager.Instance.activeObstacles;
-        treasure = HvZ_Manager.Instance.activeTreasure;
     }
 
     protected override void CalcSteeringForces()
@@ -35,17 +29,25 @@ public class Human : Vehicle
         netForce += ObstacleAvoidance() * obstacleAvoidanceFactor;
 
         // Humans seek the treasure
-        netForce += Seek(treasure.gameObject) * seekTreasureFactor;
-        netForce += BoundaryEvasion(timeCoeff) * boundaryEvasionFactor;
+        //netForce += Seek(treasure.gameObject) * seekTreasureFactor;
+        netForce += BoundaryEvasion(predictionFactor) * boundaryEvasionFactor;
 
+        float numZombiesDetected = 0;
         foreach (GameObject zombie in activeZombies)
         {
             // If within the human's detection range, humans flee zombies
             if (Vector3.Distance(planarPosition, zombie.GetComponent<Zombie>().planarPosition) < detectionRange)
             {
-                netForce += Flee(zombie) * fleeZombiesFactor;
+                netForce += Evade(zombie, predictionFactor) * evadeZombiesFactor;
+                numZombiesDetected++;
             }
         }
+        if (numZombiesDetected == 0)
+        {
+            netForce += Wandering() * wanderingFactor;
+        }
+
+        netForce += Separation() * separationFactor;
 
         // Clamp the net force to a max force to keep the simulation reasonable
         netForce = Vector3.ClampMagnitude(netForce, maxForce);
@@ -55,12 +57,6 @@ public class Human : Vehicle
     protected override void Update()
     {
         base.Update();
-
-        // If the treasure is within arms reach, let the human grab it
-        if (Vector3.Distance(planarPosition, treasure.transform.position) < radius)
-        {
-            treasure.GetComponent<Treasure>().OnGrab();
-        }
 
         if (Input.GetKeyDown(KeyCode.D))
         {
@@ -101,6 +97,12 @@ public class Human : Vehicle
             GL.Vertex(position);
             GL.Vertex(position + right * debugMultiplier);
             GL.End();
+
+            Vector3 scale = new Vector3(0.4f, 0.4f, 0.4f);
+            Matrix4x4 debugPos = Matrix4x4.TRS(futurePosition, Quaternion.identity, scale);
+
+            debugPrediction.SetPass(0);
+            Graphics.DrawMeshNow(futurePosMesh, debugPos);
         }
     }
 }

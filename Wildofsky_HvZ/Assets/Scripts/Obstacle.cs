@@ -7,7 +7,7 @@ public class Obstacle : MonoBehaviour
     [Min(0.1f)]
     public float radius = 2f;
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.white;
 

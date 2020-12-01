@@ -107,6 +107,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   planarPosition: {x: 0, y: 0, z: 0}
+  futurePosition: {x: 0, y: 0, z: 0}
   mass: 1
   radius: 1
   maxSpeed: 8
@@ -114,7 +115,23 @@ MonoBehaviour:
   timeCoeff: 2
   avoidanceRange: 9
   pathMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  futurePosMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  predictionFactor: 1.2
+  boundaryEvasionFactor: 1.3
+  obstacleAvoidanceFactor: 2.3
+  wanderingFactor: 1
+  separationFactor: 1
+  debugMultiplier: 1.3
+  wanderingRadius: 3.5
+  wanderCircleDist: 2
+  wanderingTimer: 0
+  wanderPeriod: 0.2
+  wanderAngleOffsetRange: 0.05
+  separationRadius: 2
+  rotationDamping: 3
   detectionRange: 8
   debugForward: {fileID: 2100000, guid: c4134103507c36b4793e7c76669ce156, type: 2}
   debugRight: {fileID: 2100000, guid: 7980e52404cc64b41a04eaad5ccd0d60, type: 2}
-  debugMultiplier: 1.3
+  debugPrediction: {fileID: 2100000, guid: 063a2bb8e461aa64bac5000bd1f43eec, type: 2}
+  seekTreasureFactor: 0.2
+  evadeZombiesFactor: 2
